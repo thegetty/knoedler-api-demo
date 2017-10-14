@@ -1,10 +1,13 @@
 library(randomForest)
 library(tidyverse)
+library(dummies)
 
 load("knoedler_models.rda")
 ensemble_model <- map(all_model_iterations, "rf")
 
-sample_data <- all_model_iterations[[1]]$train_data
+sample_data <- distinct(map_df(all_model_iterations, "train_x"))
+
+dummy_data <- dummy.data.frame(as.data.frame(sample_data), sep = "_")
 
 range_list <- function(x, ...) {
   r <- range(x, ...)
@@ -23,58 +26,73 @@ produce_schema <- function(df) {
 }
 
 data_schema <- produce_schema(sample_data)
+acceptable_names <- names(sample_data)
 
-acceptable_names <- c("area", "orientation", "is_jointly_owned", "n_purchase_partners", "k_share", "genre", "is_firsttime_seller", "is_major_seller", "is_firsttime_buyer", "is_major_buyer", "is_old_master", "deflated_expense_amount", "purchase_seller_type", "artist_is_alive", "time_in_stock")
+na_mode <- function(a, na_fun = na.roughfix) {
+  a %>%
+    bind_rows(sample_data) %>%
+    na_fun() %>%
+    slice(1)
+}
 
 # Take basic string input and construct a data frame that matches the expected data for Knoedler
 rectify_arguments <- function(a) {
 
-  raw_df <- data.frame(list(...))
+  raw_df <- as.data.frame(a)
 
-  stopifnot(all(sort(names(a)) == sort(acceptable_names)))
+  missing_args <- setdiff(acceptable_names, names(raw_df))
+  surplus_args <- setdiff(names(raw_df), acceptable_names)
 
-  a %>%
+  if (length(missing_args) > 0 | length(surplus_args > 0))
+      stop("Missing arguments: ", paste0("'", missing_args, "'", collapse = ", "), "\\nUnused arguments: ", paste0("'", surplus_args, "'", collapse = ", "))
+
+  res <- raw_df %>%
     mutate_at(vars(area, k_share, n_purchase_partners, deflated_expense_amount, time_in_stock), as.numeric) %>%
     mutate_at(vars(is_jointly_owned, is_firsttime_seller, is_major_seller, is_firsttime_buyer, is_major_buyer, is_old_master, artist_is_alive), funs(factor(as.logical(.), levels = c("TRUE", "FALSE")))) %>%
     mutate(
       orientation = factor(orientation, levels = c("portrait", "landscape", "square")),
       genre = factor(genre, levels = c("Landscape", "Genre", "History", "Portrait", "Still Life", "abstract")),
-      purchase_seller_type = factor(purchase_seller_type, levels = c("Artist", "Museum", "Dealer", "Collector"))) %>%
-    na_mode()
-}
+      purchase_seller_type = factor(purchase_seller_type, levels = c("Artist", "Museum", "Dealer", "Collector")))
 
-na_mode <- function(a, na_fun = na.roughfix) {
-  a %>%
-    bind_rows(original_data) %>%
-    na_fun() %>%
-    slice(1)
+  res
 }
 
 produce_prediction <- function(df) {
-  preds <- map(ensemble_model, predict, newdata = df, type = "prob") %>%
-    map_df(as.data.frame)
-
-  preds %>%
+  map(ensemble_model, predict, newdata = df, type = "prob") %>%
+    map_df(as.data.frame) %>%
     summarize_all(funs(low = quantile(., 0.05), med = quantile(., 0.50), hig = quantile(., 0.95)))
 }
 
 #* @serializer unboxedJSON
 #* @get /predict
-knoedler_predict <- function(...) {
-
-  rectified_df <- rectify_arguments(...)
-
+function(res, req, ...) {
+  raw_args <- list(...)
+  rectified_df <- rectify_arguments(raw_args)
   produce_prediction(rectified_df)
+}
+
+produce_similar <- function(df) {
+  # input_dummy <- dummy.data.frame(as.data.frame(df), sep = "_")
+  # normalized_input <- log(as.vector(input_dummy))
+  # ref_distances <- apply(log(dummy_data), 1, function(k) sqrt(sum(k - normalized_input)^2))
+  #
+  # kmodel$train_data %>%
+  #   mutate(
+  #     distances = ref_distances,
+  #     ids = row_number()) %>%
+  #   arrange(distances) %>%
+  #   slice(1:5)
 }
 
 #* @serializer unboxedJSON
 #* @get /similar
-knoedler_similar <- function(...) {
-
+function(res, req, ...) {
+  rectified_df <- rectify_arguments(...)
+  produce_similar(rectified_df)
 }
 
 #* @serializer unboxedJSON
 #* @get /arguments
-knoedler_arguments <- function() {
+function() {
   data_schema
 }
