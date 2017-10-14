@@ -6,12 +6,20 @@ ensemble_model <- map(all_model_iterations, "rf")
 
 sample_data <- all_model_iterations[[1]]$train_data
 
+range_list <- function(x, ...) {
+  r <- range(x, ...)
+
+  list(
+    min = r[1],
+    max = r[2]
+  )
+}
 
 produce_schema <- function(df) {
   df %>%
     imap(function(x, y) list(label = y, type = class(x))) %>%
     unname() %>%
-    modify_if(map_lgl(., function(p) p[["type"]] == "factor"), function(x) c(x, list(values = levels(sample_data[[x[["label"]]]])))) %>%     modify_if(map_lgl(., function(p) p[["type"]] %in% c("numeric", "integer")), function(x) c(x, list(range = range(sample_data[[x[["label"]]]]))))
+    modify_if(map_lgl(., function(p) p[["type"]] == "factor"), function(x) c(x, list(values = levels(sample_data[[x[["label"]]]])))) %>%     modify_if(map_lgl(., function(p) p[["type"]] %in% c("numeric", "integer")), function(x) c(x, list(range = range_list(sample_data[[x[["label"]]]]))))
 }
 
 data_schema <- produce_schema(sample_data)
