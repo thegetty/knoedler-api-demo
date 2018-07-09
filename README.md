@@ -189,53 +189,15 @@ Passing the same query to `/similar` will return a list of IDs of similar histor
 curl 'localhost:8000/similar?area=350&orientation=portrait&is_jointly_owned=TRUE&n_purchase_partners=1&k_share=1&genre=Landscape&is_firsttime_seller=TRUE&is_major_seller=FALSE&is_firsttime_buyer=FALSE&is_major_buyer=TRUE&is_old_master=FALSE&deflated_expense_amount=2500&purchase_seller_type=Collector&artist_is_alive=TRUE&time_in_stock=250'
 ```
 
-This returns a document with database IDs and distances:
+This returns a document with database IDs:
 
 ``` json
-{
-  "result": [
-    {
-      "id": 7918,
-      "distance": 58.7623
-    },
-    {
-      "id": 6826,
-      "distance": 62.6183
-    },
-    {
-      "id": 6220,
-      "distance": 65.3447
-    },
-    {
-      "id": 14608,
-      "distance": 66.1718
-    },
-    {
-      "id": 6351,
-      "distance": 68.5778
-    }
-  ],
-  "distance_quantiles": [
-    {
-      "percentile": 0,
-      "value": 0
-    },
-    {
-      "percentile": 0.25,
-      "value": 669.6666
-    },
-    {
-      "percentile": 0.5,
-      "value": 1158.0585
-    },
-    {
-      "percentile": 0.75,
-      "value": 2590.8223
-    },
-    {
-      "percentile": 1,
-      "value": 356621.7715
-    }
-  ]
-}
+[
+  17089,
+  8665,
+  18319,
+  16865,
+  12747,
+  1435
+]
 ```
