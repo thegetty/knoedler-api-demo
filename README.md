@@ -7,7 +7,8 @@ The app will retrieve profit predictions as well as similar observations from a 
 ## Installation and Running
 
 This app is Dockerized, so just build and run
-``` r
+
+``` sh
 docker build -t knoedlerapi .
 docker run -it --rm -p 8000:8000 knoedlerapi
 ```
