@@ -40,7 +40,7 @@ na_mode <- function(a, na_fun = na.roughfix) {
 # Take basic string input and construct a data frame that matches the expected data for Knoedler
 rectify_arguments <- function(a) {
 
-  raw_df <- as.data.frame(a)
+  raw_df <- as_tibble(a)
 
   missing_args <- setdiff(acceptable_names, names(raw_df))
   surplus_args <- setdiff(names(raw_df), acceptable_names)
