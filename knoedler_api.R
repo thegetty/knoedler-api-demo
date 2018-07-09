@@ -1,5 +1,6 @@
 library(randomForest)
-library(tidyverse)
+library(dplyr)
+library(purrr)
 library(dummies)
 library(distances)
 
