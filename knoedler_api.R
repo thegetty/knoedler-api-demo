@@ -1,13 +1,14 @@
 library(randomForest)
 library(tidyverse)
 library(dummies)
+library(distances)
 
 load("knoedler_models.rda")
 ensemble_model <- map(all_model_iterations, "rf")
 
 sample_data <- distinct(map_df(all_model_iterations, "train_x"))
 
-dummy_data <- dummy.data.frame(as.data.frame(sample_data), sep = "_")
+dummy_data <- dummy.data.frame(as.data.frame(sample_data), sep = "_", drop = FALSE) %>% data.matrix()
 
 range_list <- function(x, ...) {
   r <- range(x, ...)
@@ -72,22 +73,33 @@ function(res, req, ...) {
 }
 
 produce_similar <- function(df) {
-  # input_dummy <- dummy.data.frame(as.data.frame(df), sep = "_")
-  # normalized_input <- log(as.vector(input_dummy))
-  # ref_distances <- apply(log(dummy_data), 1, function(k) sqrt(sum(k - normalized_input)^2))
-  #
-  # kmodel$train_data %>%
-  #   mutate(
-  #     distances = ref_distances,
-  #     ids = row_number()) %>%
-  #   arrange(distances) %>%
-  #   slice(1:5)
+  input_dummy <- dummy.data.frame(as.data.frame(df), sep = "_", drop = FALSE) %>% data.matrix()
+  str(input_dummy)
+
+  combined_info <- rbind(dummy_data, input_dummy)
+  new_index <- nrow(dummy_data) + 1
+
+  norm_dist <- distances(combined_info)
+  ref_distances <- distance_columns(norm_dist, column_indices = new_index)[,1]
+  top_match_indices <- order(ref_distances)[2:6]
+
+  list(
+    result = data.frame(
+      id = top_match_indices,
+      distance = ref_distances[top_match_indices]
+    ),
+    distance_quantiles = data.frame(
+      percentile = seq(0, 1, length.out = 5),
+      value = quantile(ref_distances, names = FALSE)
+    )
+  )
 }
 
 #* @serializer unboxedJSON
 #* @get /similar
 function(res, req, ...) {
-  rectified_df <- rectify_arguments(...)
+  raw_args <- list(...)
+  rectified_df <- rectify_arguments(raw_args)
   produce_similar(rectified_df)
 }
 
