@@ -1,12 +1,14 @@
 # Knoedler API prototype
 
-A prototype API service using the R package [plumber](https://www.rplumber.io) to wrap arbitray R code in a REST API.
+A prototype service using the R package [plumber](https://www.rplumber.io) to wrap R code in a REST API.
 
 The app will retrieve profit predictions as well as similar observations from a predictive model of the Knoedler transactions dataset.
 
+Developed by Matthew Lincoln in conjunction with [pi_research](https://github.com/thegetty/pi_research). Demo visualization available at [knoedler-interactive-demo](https://github.com/mdlincoln/knoedler-interactive-demo).
+
 ## Installation and Running
 
-This app is Dockerized, so just build and run
+This app is Dockerized, so just build and run:
 
 ``` sh
 docker build -t knoedlerapi .
@@ -158,7 +160,7 @@ This will return a JSON document with the field names, variable types, and categ
 
 ### Getting predictions
 
-You can `GET` predictions from the `/predict` path, passing variables as URL query parameters:
+You can `GET` predictions from the `/predict` endpoint, passing variables as URL query parameters:
 
 ``` sh
 curl 'localhost:8000/predict?area=350&orientation=portrait&is_jointly_owned=TRUE&n_purchase_partners=1&k_share=1&genre=Landscape&is_firsttime_seller=TRUE&is_major_seller=FALSE&is_firsttime_buyer=FALSE&is_major_buyer=TRUE&is_old_master=FALSE&deflated_expense_amount=2500&purchase_seller_type=Collector&artist_is_alive=TRUE&time_in_stock=250'
@@ -187,7 +189,7 @@ Passing the same query to `/similar` will return a list of IDs of similar histor
 curl 'localhost:8000/similar?area=350&orientation=portrait&is_jointly_owned=TRUE&n_purchase_partners=1&k_share=1&genre=Landscape&is_firsttime_seller=TRUE&is_major_seller=FALSE&is_firsttime_buyer=FALSE&is_major_buyer=TRUE&is_old_master=FALSE&deflated_expense_amount=2500&purchase_seller_type=Collector&artist_is_alive=TRUE&time_in_stock=250'
 ```
 
-This returns a document with database ID and distances:
+This returns a document with database IDs and distances:
 
 ``` json
 {
@@ -237,4 +239,3 @@ This returns a document with database ID and distances:
   ]
 }
 ```
-
