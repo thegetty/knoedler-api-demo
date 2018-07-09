@@ -75,25 +75,14 @@ function(res, req, ...) {
 
 produce_similar <- function(df) {
   input_dummy <- dummy.data.frame(as.data.frame(df), sep = "_", drop = FALSE) %>% data.matrix()
-  str(input_dummy)
 
   combined_info <- rbind(dummy_data, input_dummy)
   new_index <- nrow(dummy_data) + 1
 
   norm_dist <- distances(combined_info)
-  ref_distances <- distance_columns(norm_dist, column_indices = new_index)[,1]
-  top_match_indices <- order(ref_distances)[2:6]
+  ref_distances <- nearest_neighbor_search(norm_dist, k = 6, query_indices = new_index, search_indices = seq_len(nrow(dummy_data)))[,1]
 
-  list(
-    result = data.frame(
-      id = top_match_indices,
-      distance = ref_distances[top_match_indices]
-    ),
-    distance_quantiles = data.frame(
-      percentile = seq(0, 1, length.out = 5),
-      value = quantile(ref_distances, names = FALSE)
-    )
-  )
+  ref_distances
 }
 
 #* @serializer unboxedJSON
